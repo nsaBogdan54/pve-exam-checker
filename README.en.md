@@ -2,78 +2,78 @@
 
 [Русский](README.md) | **English**
 
-Modular Python tool for automated inspection and grading of **Proxmox VE** demonstration exam labs (`de2027`, Module 1 & Module 2) across **ALT Linux** and **EcoRouterOS** nodes, complete with a zero-dependency Web UI.
+Модульный комплекс на Python для автоматизированного сбора конфигураций и объективной оценки выполнения демонстрационного экзамена **de2027** (Модуль 1 и Модуль 2) в среде виртуализации **Proxmox VE** (узлы **ALT Linux** и маршрутизаторы **EcoRouterOS**), оснащённый веб-интерфейсом без внешних зависимостей.
 
 ![Web UI Preview](docs/preview.png)
 
-## Key Features
+## Основные возможности
 
-- **Safe Read-Only Inspection:** Does not require `root` access on hypervisor nodes (`PVE1`/`PVE2`).
-  - **Linux Nodes (`ALT Linux`):** Inspected via Proxmox API (`qemu-guest-agent`). Standalone checks are executed in-memory via `base64` payloads and built-in `bash /dev/tcp` without pre-copying scripts onto student VMs.
-  - **Routers (`EcoRouterOS`):** Temporarily attaches the isolated management interface (`vrf management`, `192.168.255.1/24`) via API per router, retrieves `show running-config` and `show users localdb` over SSH (`paramiko`), and guarantees `link_down=1` restoration in a `try...finally` block.
-- **Customizable Exam Variants (`variants_m1/`, `variants_m2/`):** All variable exam parameters (subnet prefixes, usernames, UIDs, SSH/DNAT ports, DB credentials) are isolated into clean Python config files.
-- **Built-in Web Interface (`web.py`):** Built purely on Python's standard library (`http.server`). Supports switching between Module 1 and Module 2, selecting and editing variant files directly in the browser, expandable config evidence per check, and full raw dump inspection.
+- **Безопасный сбор в режиме чтения:** не требует `root`-доступа к нодам гипервизора (`PVE1`/`PVE2`) и не оставляет следов в кластере.
+  - **Linux-узлы (`ALT Linux`):** опрашиваются напрямую через Proxmox API (`qemu-guest-agent`). Автономные проверки передаются через `base64` и встроенный `bash /dev/tcp` без предварительного копирования файлов на ВМ студентов.
+  - **Маршрутизаторы `EcoRouterOS`:** для каждого роутера по очереди через API временно подключается изолированный интерфейс управления (`vrf management`, `192.168.255.1/24`), снимаются `show running-config` и `show users localdb` по SSH (`paramiko`), после чего в блоке `try...finally` гарантированно возвращается `link_down=1`.
+- **Система вариантов (`variants_m1/`, `variants_m2/`):** все изменяемые параметры экзамена (маски подсетей, имена пользователей, UID, порты SSH и DNAT, реквизиты БД) вынесены в отдельные Python-файлы.
+- **Веб-интерфейс (`web.py`):** написан на чистом стандартном модуле `http.server`. Поддерживает переключение между Модулем 1 и Модулем 2, выбор и встроенное редактирование вариантов прямо в браузере, раскрывающиеся фрагменты конфигов-доказательств по каждой проверке и просмотр полного дампа.
 
-## Structure
+## Структура проекта
 
 ```text
 pve-exam-checker/
-├── config.example.py     # Proxmox VE API credentials template
-├── web.py                # Zero-dependency Web UI (port 8080)
-├── collector_m1.py       # Module 1 state collector
-├── check_m1.py           # Module 1 CLI grader
-├── variants_m1/          # Module 1 parameter variants (default.py, loader.py)
-├── tasks_m1/             # Module 1 parser, check modules, and config evidence extractor
-├── collector_m2.py       # Module 2 state collector
-├── check_m2.py           # Module 2 CLI grader
-├── variants_m2/          # Module 2 parameter variants (default.py, loader.py)
-├── tasks_m2/             # Module 2 parser, check modules, and config evidence extractor
-├── AGENTS.md             # Architecture & agent integration guide
-├── LICENSE               # GNU GPL-3.0
-├── README.md             # English documentation
-└── README.ru.md          # Russian documentation
+├── config.example.py     # Шаблон настроек доступа к Proxmox API
+├── web.py                # Веб-интерфейс (порт 8080)
+├── collector_m1.py       # Сборщик данных Модуля 1
+├── check_m1.py           # CLI-проверка Модуля 1
+├── variants_m1/          # Варианты параметров Модуля 1 (default.py, loader.py)
+├── tasks_m1/             # Парсер, модули проверок и доказательств Модуля 1
+├── collector_m2.py       # Сборщик данных Модуля 2
+├── check_m2.py           # CLI-проверка Модуля 2
+├── variants_m2/          # Варианты параметров Модуля 2 (default.py, loader.py)
+├── tasks_m2/             # Парсер, модули проверок и доказательств Модуля 2
+├── AGENTS.md             # Подробная архитектура и документация
+├── LICENSE               # Лицензия GNU GPL-3.0
+├── README.md             # Документация на английском языке
+└── README.ru.md          # Документация на русском языке
 ```
 
-## Quick Start
+## Быстрый старт
 
-### 1. Configuration
+### 1. Настройка доступа к Proxmox VE
 ```bash
 cp config.example.py config.py
 chmod 600 config.py
-# Edit config.py with your Proxmox VE host, API user, and password
+# Укажите IP хоста Proxmox, имя пользователя API и пароль в config.py
 ```
 
-Minimum required Proxmox VE privileges for the service account (`ExamChecker@pve`):
+Минимальные привилегии роли `ExamChecker@pve`:
 - `/vms`: `VM.Audit`, `VM.Monitor`, `VM.Config.Network`
 - `/sdn`: `SDN.Use`
 - `/pool`: `Pool.Audit`
 
-### 2. CLI Usage
+### 2. Запуск из командной строки (CLI)
 ```bash
-# Run full inspection & grading for Module 1
-python3 check_m1.py <POOL_NAME> --variant default
+# Проверка Модуля 1 (сбор данных + оценка)
+python3 check_m1.py <ИМЯ_ПУЛА> --variant default
 
-# Run full inspection & grading for Module 2
-python3 check_m2.py <POOL_NAME> --variant default
+# Проверка Модуля 2 (сбор данных + оценка)
+python3 check_m2.py <ИМЯ_ПУЛА> --variant default
 
-# Re-evaluate an already collected dump offline
-python3 check_m1.py <POOL_NAME> --offline
-python3 check_m2.py <POOL_NAME> --offline
+# Повторный анализ без обращения к ВМ (по сохранённому дампу)
+python3 check_m1.py <ИМЯ_ПУЛА> --offline
+python3 check_m2.py <ИМЯ_ПУЛА> --offline
 
-# Verbose collection log (-v) or single-module run (--only)
-python3 check_m1.py <POOL_NAME> -v --only p2
+# Подробный вывод процесса сбора (-v) или точечный запуск (--only)
+python3 check_m1.py <ИМЯ_ПУЛА> -v --only p2
 ```
 
-### 3. Web UI
+### 3. Запуск веб-интерфейса
 ```bash
 python3 web.py
-# Open http://<CHECKER_VM_IP>:8080 in your browser
+# Веб-морда доступна по адресу http://<IP_УПРАВЛЯЮЩЕЙ_ВМ>:8080
 ```
 
-## Disclaimer
+## Дисклеймер
 
-This tool was created solely to automate educational lab assessment and demonstration exam grading in isolated training environments.
+Инструмент предназначен исключительно для автоматизации проверки учебных лабораторных работ и демонстрационных экзаменов в изолированной учебной среде.
 
-## License
+## Лицензия
 
-Distributed under the **GNU General Public License v3.0 or later** (`GPL-3.0-or-later`). See `LICENSE` for details.
+Проект распространяется под лицензией **GNU General Public License v3.0 or later** (`GPL-3.0-or-later`). Полный текст приведён в файле `LICENSE`.
