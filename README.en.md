@@ -1,6 +1,6 @@
 # pve-exam-checker
 
-**English** | [Русский](README.ru.md)
+[Русский](README.md) | **English**
 
 Modular Python tool for automated inspection and grading of **Proxmox VE** demonstration exam labs (`de2027`, Module 1 & Module 2) across **ALT Linux** and **EcoRouterOS** nodes, complete with a zero-dependency Web UI.
 
