@@ -4,6 +4,8 @@
 
 Modular Python tool for automated inspection and grading of **Proxmox VE** demonstration exam labs (`de2027`, Module 1 & Module 2) across **ALT Linux** and **EcoRouterOS** nodes, complete with a zero-dependency Web UI.
 
+![Web UI Preview](docs/preview.png)
+
 ## Key Features
 
 - **Safe Read-Only Inspection:** Does not require `root` access on hypervisor nodes (`PVE1`/`PVE2`).
