@@ -1,0 +1,9 @@
+config.py
+dumps/
+__pycache__/
+*.py[cod]
+*.log
+tmp/
+.bash_history
+.viminfo
+.ssh/
